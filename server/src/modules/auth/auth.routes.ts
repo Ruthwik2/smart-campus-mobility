@@ -11,10 +11,16 @@ import * as auth from './auth.service';
 export const authRouter = Router();
 
 const REFRESH_COOKIE = 'scm_refresh';
+// In production the web app (Vercel) and this API (Railway) are different
+// sites, so the refresh cookie must be SameSite=None; Secure to be sent on the
+// cross-site /auth/refresh XHR — otherwise a page reload can't re-mint a session
+// and the user appears logged out. Locally everything is same-site, so Lax works
+// without requiring HTTPS.
+const crossSite = env.NODE_ENV === 'production';
 const cookieOpts = {
   httpOnly: true,
-  sameSite: 'lax' as const,
-  secure: env.NODE_ENV === 'production',
+  sameSite: crossSite ? ('none' as const) : ('lax' as const),
+  secure: crossSite,
   path: '/api/v1/auth',
   maxAge: env.REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000,
 };
@@ -70,7 +76,11 @@ authRouter.post('/refresh', async (req, res, next) => {
 authRouter.post('/logout', async (req, res) => {
   const presented = req.cookies?.[REFRESH_COOKIE];
   if (presented) await auth.revokeRefreshToken(presented);
-  res.clearCookie(REFRESH_COOKIE, { path: cookieOpts.path });
+  res.clearCookie(REFRESH_COOKIE, {
+    path: cookieOpts.path,
+    sameSite: cookieOpts.sameSite,
+    secure: cookieOpts.secure,
+  });
   res.json({ ok: true });
 });
 
