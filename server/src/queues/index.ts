@@ -52,7 +52,7 @@ export async function scheduleDispatchTimeout(rideId: string) {
   await rideExpiryQueue.add(
     'expire',
     { rideId },
-    { delay: env.RIDE_DISPATCH_TIMEOUT_SEC * 1000, jobId: `expire:${rideId}:${Date.now()}` },
+    { delay: env.RIDE_DISPATCH_TIMEOUT_SEC * 1000, jobId: `expire-${rideId}-${Date.now()}` },
   );
 }
 
@@ -65,7 +65,7 @@ export async function scheduleDispatchTimeout(rideId: string) {
 export async function scheduleFutureRide(rideId: string, scheduledFor: Date) {
   const fireAt = scheduledFor.getTime() - env.SCHEDULED_DISPATCH_LEAD_MIN * 60_000;
   const delay = Math.max(0, fireAt - Date.now());
-  await scheduledRidesQueue.add('dispatch', { rideId }, { delay, jobId: `dispatch:${rideId}` });
+  await scheduledRidesQueue.add('dispatch', { rideId }, { delay, jobId: `dispatch-${rideId}` });
 }
 
 export function initQueues() {
@@ -107,7 +107,7 @@ export function initQueues() {
   // Refresh the demand forecast hourly, and once at boot so a fresh
   // database (post-seed) has predictions immediately.
   void forecastsQueue.upsertJobScheduler('hourly-forecast', { every: 60 * 60 * 1000 }, { name: 'recompute' });
-  void forecastsQueue.add('recompute-boot', {}, { jobId: `boot:${Date.now()}` });
+  void forecastsQueue.add('recompute-boot', {}, { jobId: `boot-${Date.now()}` });
 
   logger.info('background queues initialised');
 
