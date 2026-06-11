@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-paper text-ink font-body antialiased;
+  background-image: radial-gradient(rgba(16, 27, 20, 0.035) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+::selection {
+  background: #f2b807;
+  color: #101b14;
+}
+
+@layer components {
+  .card {
+    @apply rounded-card border border-line bg-white shadow-card;
+  }
+  .label {
+    @apply text-[11px] font-semibold uppercase tracking-[0.12em] text-slate2;
+  }
+  .input {
+    @apply w-full rounded-lg border border-line bg-white px-3 py-2.5 text-[15px] text-ink outline-none transition
+      placeholder:text-slate2/60 focus:border-primary focus:ring-2 focus:ring-primary/20;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-[14px] font-semibold
+      transition active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-primary text-white hover:bg-primary-dark;
+  }
+  .btn-ghost {
+    @apply btn border border-line bg-white text-ink hover:border-slate2/50;
+  }
+  .btn-danger {
+    @apply btn bg-danger-soft text-danger hover:bg-danger hover:text-white;
+  }
+  .btn-amber {
+    @apply btn bg-amber text-ink hover:brightness-95;
+  }
+}
+
+/* Route-line ride timeline — the platform's visual signature. */
+.timeline {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  row-gap: 2px;
+}
+.timeline .stop {
+  position: relative;
+  display: contents;
+}
+.timeline .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 9999px;
+  border: 3px solid #0e7a4e;
+  background: white;
+  margin-top: 5px;
+  justify-self: center;
+  z-index: 1;
+}
+.timeline .dot.done {
+  background: #0e7a4e;
+}
+.timeline .dot.live {
+  border-color: #f2b807;
+  background: #f2b807;
+  animation: pulse-dot 1.6s ease-in-out infinite;
+}
+.timeline .rail {
+  justify-self: center;
+  width: 3px;
+  min-height: 22px;
+  background: repeating-linear-gradient(to bottom, #0e7a4e 0 6px, transparent 6px 11px);
+  opacity: 0.45;
+}
+.timeline .rail.done {
+  background: #0e7a4e;
+  opacity: 1;
+}
