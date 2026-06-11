@@ -1,0 +1,234 @@
+// Smart Campus Mobility Platform — data model
+// PostgreSQL 15 + Prisma ORM
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  PASSENGER
+  DRIVER
+  ADMIN
+}
+
+enum DriverStatus {
+  OFFLINE
+  ONLINE
+  BUSY // on an active ride
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum VehicleType {
+  E_RICKSHAW
+  AUTO
+  CAB
+  SHUTTLE
+}
+
+enum RideStatus {
+  SCHEDULED // future booking, not yet dispatched
+  REQUESTED // visible to online drivers
+  ACCEPTED  // single driver assigned
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  EXPIRED   // no driver accepted within the dispatch window
+}
+
+enum PaymentMethod {
+  CASH
+  UPI
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  phone        String?  @unique
+  passwordHash String
+  fullName     String
+  role         Role     @default(PASSENGER)
+  avatarUrl    String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  driverProfile    DriverProfile?
+  ridesAsPassenger Ride[]         @relation("PassengerRides")
+  ratingsGiven     Rating[]
+  refreshTokens    RefreshToken[]
+
+  @@index([role])
+  @@map("users")
+}
+
+model DriverProfile {
+  id                 String             @id @default(cuid())
+  userId             String             @unique
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  licenseNumber      String             @unique
+  vehicleType        VehicleType        @default(E_RICKSHAW)
+  vehicleModel       String
+  vehiclePlate       String             @unique
+  capacity           Int                @default(3)
+  verificationStatus VerificationStatus @default(PENDING)
+  verificationNote   String?
+  status             DriverStatus       @default(OFFLINE)
+  currentLat         Float?
+  currentLng         Float?
+  lastLocationAt     DateTime?
+  ratingAvg          Float              @default(0)
+  ratingCount        Int                @default(0)
+  totalRides         Int                @default(0)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  rides     Ride[]           @relation("DriverRides")
+  ratings   Rating[]
+  documents DriverDocument[]
+
+  // Dispatch & ops queries: "all online, approved drivers"
+  @@index([status, verificationStatus])
+  @@map("driver_profiles")
+}
+
+model DriverDocument {
+  id              String        @id @default(cuid())
+  driverProfileId String
+  driverProfile   DriverProfile @relation(fields: [driverProfileId], references: [id], onDelete: Cascade)
+  type            String // LICENSE | VEHICLE_RC | ID_PROOF
+  fileUrl         String
+  uploadedAt      DateTime      @default(now())
+
+  @@index([driverProfileId])
+  @@map("driver_documents")
+}
+
+model CampusZone {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  lat       Float
+  lng       Float
+  createdAt DateTime @default(now())
+
+  @@map("campus_zones")
+}
+
+model Ride {
+  id          String  @id @default(cuid())
+  code        String  @unique // human-readable, e.g. R-K3X9F2
+  passengerId String
+  passenger   User    @relation("PassengerRides", fields: [passengerId], references: [id])
+  driverId    String?
+  driver      DriverProfile? @relation("DriverRides", fields: [driverId], references: [id])
+
+  pickupLabel String
+  pickupLat   Float
+  pickupLng   Float
+  dropLabel   String
+  dropLat     Float
+  dropLng     Float
+
+  status        RideStatus    @default(REQUESTED)
+  scheduledFor  DateTime? // set only for SCHEDULED rides
+  requestedAt   DateTime      @default(now())
+  acceptedAt    DateTime?
+  startedAt     DateTime?
+  completedAt   DateTime?
+  cancelledAt   DateTime?
+  cancelledBy   Role?
+  cancelReason  String?
+  startOtp      String? // passenger shows this to the driver at pickup
+  distanceKm    Float?
+  estimatedFare Int? // INR
+  finalFare     Int? // INR
+  paymentMethod PaymentMethod @default(CASH)
+  paymentStatus PaymentStatus @default(PENDING)
+  paymentRef    String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  rating Rating?
+  events RideEvent[]
+
+  // Hot paths: dispatch board, "my rides", driver history, demand analytics
+  @@index([status, requestedAt])
+  @@index([passengerId, createdAt(sort: Desc)])
+  @@index([driverId, createdAt(sort: Desc)])
+  @@index([pickupLabel, requestedAt])
+  @@index([scheduledFor])
+  @@map("rides")
+}
+
+// Append-only audit trail for every ride transition — powers admin live feed
+// and makes state changes debuggable/replayable.
+model RideEvent {
+  id        String   @id @default(cuid())
+  rideId    String
+  ride      Ride     @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  type      String // REQUESTED | ACCEPTED | STARTED | COMPLETED | CANCELLED | EXPIRED | REASSIGNED
+  actorRole Role?
+  data      Json?
+  createdAt DateTime @default(now())
+
+  @@index([rideId, createdAt])
+  @@map("ride_events")
+}
+
+model Rating {
+  id          String        @id @default(cuid())
+  rideId      String        @unique
+  ride        Ride          @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  driverId    String
+  driver      DriverProfile @relation(fields: [driverId], references: [id])
+  passengerId String
+  passenger   User          @relation(fields: [passengerId], references: [id])
+  stars       Int // 1..5
+  comment     String?
+  createdAt   DateTime      @default(now())
+
+  @@index([driverId, createdAt(sort: Desc)])
+  @@map("ratings")
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  userAgent String?
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+// Output of the forecasting job: predicted demand per zone per hour.
+model DemandForecast {
+  id             String   @id @default(cuid())
+  zoneName       String
+  forHour        DateTime // truncated to the hour, UTC
+  predictedRides Float
+  modelVersion   String   @default("seasonal-naive-v1")
+  createdAt      DateTime @default(now())
+
+  @@unique([zoneName, forHour])
+  @@index([forHour])
+  @@map("demand_forecasts")
+}
