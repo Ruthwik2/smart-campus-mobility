@@ -131,7 +131,7 @@ Campus demand is dominated by two seasonalities — hour-of-day and day-of-week 
 
 ## Fares, OTP, and payments
 
-Fares are deterministic — ₹20 base + ₹10/km over the haversine distance between zone centroids — estimated at request time and finalized at completion. Trip start requires the driver to enter a 4-digit OTP shown only on the passenger's screen, which proves physical co-presence before the state machine will move to `IN_PROGRESS`. Payments are **simulated**: UPI rides flip to `PAID` on completion and cash rides record `COLLECTED`; the `paymentStatus` field and completion hook are exactly where a PSP webhook would land.
+Fares are deterministic — a flat ₹10 between any two campus zones — estimated at request time and finalized at completion. Trip start requires the driver to enter a 4-digit OTP shown only on the passenger's screen, which proves physical co-presence before the state machine will move to `IN_PROGRESS`. Payments are **simulated**: UPI rides flip to `PAID` on completion and cash rides record `COLLECTED`; the `paymentStatus` field and completion hook are exactly where a PSP webhook would land.
 
 ## Frontend architecture
 

@@ -10,9 +10,8 @@ export function haversineKm(lat1: number, lng1: number, lat2: number, lng2: numb
   return 2 * R * Math.asin(Math.sqrt(a));
 }
 
-/** Campus tariff: flag-down 20 INR + 10 INR/km, rounded to the nearest rupee. */
-export function estimateFare(distanceKm: number): number {
-  const BASE = 20;
-  const PER_KM = 10;
-  return Math.max(BASE, Math.round(BASE + distanceKm * PER_KM));
+/** Campus tariff: flat 10 INR between any two campus zones, regardless of distance. */
+export function estimateFare(_distanceKm: number): number {
+  const FLAT_FARE = 10;
+  return FLAT_FARE;
 }

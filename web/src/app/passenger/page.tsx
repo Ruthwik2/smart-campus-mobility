@@ -11,7 +11,8 @@ import { getSocket } from '@/lib/socket';
 import type { CampusZone, NearbyDriver, Ride } from '@/lib/types';
 import { useLive } from '@/stores/live';
 
-const estimate = (km: number) => 20 + Math.round(km * 10);
+// Flat campus tariff: ₹10 between any two zones.
+const FLAT_FARE = 10;
 function haversineKm(aLat: number, aLng: number, bLat: number, bLng: number) {
   const R = 6371;
   const dLat = ((bLat - aLat) * Math.PI) / 180;
@@ -196,8 +197,8 @@ function RequestForm({ zones }: { zones: CampusZone[] }) {
 
       {km !== null && (
         <div className="flex items-baseline justify-between rounded-lg bg-primary-soft px-4 py-3">
-          <span className="text-[13px] font-medium text-primary-dark">{km.toFixed(1)} km · ₹20 base + ₹10/km</span>
-          <span className="font-mono text-xl font-bold text-primary-dark">≈ ₹{estimate(km)}</span>
+          <span className="text-[13px] font-medium text-primary-dark">{km.toFixed(1)} km · flat fare anywhere on campus</span>
+          <span className="font-mono text-xl font-bold text-primary-dark">₹{FLAT_FARE}</span>
         </div>
       )}
 

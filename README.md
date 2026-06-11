@@ -4,7 +4,7 @@ A real-time ride dispatch platform for a university campus — passengers book e
 
 ## What it does
 
-**Passengers** pick pickup and drop from 12 seeded campus zones, see a live fare estimate (₹20 + ₹10/km) and how many drivers are nearby, and either request now or schedule for later. Once a driver accepts, the screen shows who is coming — vehicle, plate, rating, a call button — plus a live distance-to-pickup that ticks down as the driver moves, and the 4-digit code the driver must enter to start the trip. Completed rides settle (simulated UPI/cash) and prompt a star rating.
+**Passengers** pick pickup and drop from 48 seeded campus zones (gates, bhawans, and every IIT Roorkee department), see the flat ₹10 fare and how many drivers are nearby, and either request now or schedule for later. Once a driver accepts, the screen shows who is coming — vehicle, plate, rating, a call button — plus a live distance-to-pickup that ticks down as the driver moves, and the 4-digit code the driver must enter to start the trip. Completed rides settle (simulated UPI/cash) and prompt a star rating.
 
 **Drivers** sign up with vehicle and license details, upload verification documents, and once approved flip a single switch to go online. New requests animate onto a dispatch board in real time; accepting is race-safe (the loser of a simultaneous tap gets a clean "another driver picked that up" instead of a double booking). The active job walks through OTP start → complete, a bail option returns the ride to the board, and a performance tab charts 14 days of rides and earnings with a rating breakdown.
 

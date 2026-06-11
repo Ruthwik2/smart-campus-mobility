@@ -7,18 +7,57 @@ const prisma = new PrismaClient();
 
 /** Well-known landmarks across the IIT Roorkee campus (approximate coordinates). */
 const CAMPUS_ZONES = [
+  // Gates & central landmarks
   { name: 'Main Gate', lat: 29.8665, lng: 77.8924 },
+  { name: 'Century Gate', lat: 29.8604, lng: 77.8988 },
   { name: 'Main Building', lat: 29.8649, lng: 77.8965 },
   { name: 'Central Library', lat: 29.8655, lng: 77.8951 },
+  { name: 'Convocation Hall (Saraswati Mandir)', lat: 29.866, lng: 77.8959 },
+  { name: 'LHC Complex', lat: 29.8641, lng: 77.8979 },
+  { name: 'Hospital', lat: 29.8687, lng: 77.8911 },
+  { name: 'Sports Complex', lat: 29.8612, lng: 77.8942 },
+  { name: 'Student Centre', lat: 29.8657, lng: 77.8938 },
+  { name: 'MAC (Multi Activity Centre)', lat: 29.8619, lng: 77.8955 },
+  { name: 'LBS', lat: 29.8607, lng: 77.8965 },
+  { name: 'ABN', lat: 29.8636, lng: 77.8946 },
+  { name: 'PIC', lat: 29.8645, lng: 77.8935 },
+  // Bhawans & residences
   { name: 'Rajendra Bhawan', lat: 29.8693, lng: 77.8989 },
   { name: 'Govind Bhawan', lat: 29.8701, lng: 77.895 },
   { name: 'Sarojini Bhawan', lat: 29.8678, lng: 77.8932 },
   { name: 'Cautley Bhawan', lat: 29.8625, lng: 77.9001 },
-  { name: 'LHC Complex', lat: 29.8641, lng: 77.8979 },
-  { name: 'Hospital', lat: 29.8687, lng: 77.8911 },
-  { name: 'Sports Complex', lat: 29.8612, lng: 77.8942 },
-  { name: 'Nehru Bhawan', lat: 29.8716, lng: 77.8967 },
-  { name: 'Century Gate', lat: 29.8604, lng: 77.8988 },
+  { name: 'Ganga Bhawan', lat: 29.8708, lng: 77.8978 },
+  { name: 'Kasturba Bhawan', lat: 29.8682, lng: 77.8941 },
+  { name: 'Himalaya Bhawan', lat: 29.8712, lng: 77.8935 },
+  { name: 'Jawahar Bhawan', lat: 29.8719, lng: 77.8959 },
+  { name: 'Rajiv Bhawan', lat: 29.8722, lng: 77.8985 },
+  { name: 'Ravindra Bhawan', lat: 29.8669, lng: 77.8975 },
+  { name: 'Radhakrishnan Bhawan', lat: 29.8698, lng: 77.9006 },
+  { name: 'Azad Bhawan', lat: 29.8632, lng: 77.893 },
+  { name: 'Indira Bhawan', lat: 29.8716, lng: 77.8917 },
+  { name: 'Vigyan Kunj', lat: 29.8727, lng: 77.8946 },
+  { name: 'Khosla International House', lat: 29.8661, lng: 77.899 },
+  // Departments (Roorkee campus)
+  { name: 'Architecture & Planning Department', lat: 29.8647, lng: 77.8989 },
+  { name: 'Biosciences & Bioengineering Department', lat: 29.8651, lng: 77.8997 },
+  { name: 'Chemical Engineering Department', lat: 29.8639, lng: 77.8992 },
+  { name: 'Chemistry Department', lat: 29.8644, lng: 77.8973 },
+  { name: 'Civil Engineering Department', lat: 29.8652, lng: 77.8972 },
+  { name: 'Computer Science & Engineering Department', lat: 29.8674, lng: 77.8962 },
+  { name: 'Design Department', lat: 29.8628, lng: 77.8975 },
+  { name: 'Earth Sciences Department', lat: 29.8631, lng: 77.8963 },
+  { name: 'Earthquake Engineering Department', lat: 29.8668, lng: 77.8999 },
+  { name: 'Electrical Engineering Department', lat: 29.8653, lng: 77.8962 },
+  { name: 'Electronics & Communication Engineering Department', lat: 29.8659, lng: 77.8969 },
+  { name: 'Humanities & Social Sciences Department', lat: 29.8648, lng: 77.895 },
+  { name: 'Hydrology Department', lat: 29.8637, lng: 77.9006 },
+  { name: 'Hydro & Renewable Energy Department', lat: 29.8682, lng: 77.9008 },
+  { name: 'Management Studies Department', lat: 29.8615, lng: 77.8978 },
+  { name: 'Mathematics Department', lat: 29.865, lng: 77.8957 },
+  { name: 'Mechanical & Industrial Engineering Department', lat: 29.8642, lng: 77.8954 },
+  { name: 'Metallurgical & Materials Engineering Department', lat: 29.8634, lng: 77.8983 },
+  { name: 'Physics Department', lat: 29.8646, lng: 77.8943 },
+  { name: 'Water Resources Development & Management Department', lat: 29.8676, lng: 77.899 },
 ];
 
 const DRIVERS = [
@@ -49,7 +88,8 @@ function haversineKm(aLat: number, aLng: number, bLat: number, bLng: number) {
   return 2 * R * Math.asin(Math.sqrt(s));
 }
 
-const estimateFare = (km: number) => 20 + Math.round(km * 10);
+// Flat campus tariff: ₹10 between any two zones.
+const estimateFare = (_km: number) => 10;
 const rideCode = () => `R-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
 const otp = () => String(crypto.randomInt(1000, 10000));
 
@@ -82,6 +122,8 @@ async function main() {
   const passwordHash = await bcrypt.hash(PASSWORD, 10);
 
   // ---- Zones ----------------------------------------------------------------
+  // Drop zones that are no longer part of the campus list (e.g. renamed/removed stops).
+  await prisma.campusZone.deleteMany({ where: { name: { notIn: CAMPUS_ZONES.map((z) => z.name) } } });
   for (const z of CAMPUS_ZONES) {
     await prisma.campusZone.upsert({ where: { name: z.name }, update: { lat: z.lat, lng: z.lng }, create: z });
   }
