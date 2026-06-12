@@ -480,7 +480,11 @@ function ActiveJobCard({ ride }: { ride: Ride }) {
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="card space-y-4 p-5">
       <RideMeta ride={ride} />
       <h2 className="font-display text-lg font-bold leading-tight">
-        {ride.status === 'ACCEPTED' ? 'Head to the pickup point' : 'Trip in progress'}
+        {ride.status === 'ACCEPTED'
+          ? 'Head to the pickup point'
+          : ride.status === 'COMPLETED'
+            ? 'Ride completed'
+            : 'Trip in progress'}
       </h2>
 
       <RideTimeline ride={ride} />
@@ -522,7 +526,11 @@ function ActiveJobCard({ ride }: { ride: Ride }) {
 
       {error && <p className="rounded-lg bg-danger-soft px-3 py-2 text-[13px] font-medium text-danger">{error}</p>}
 
-      {ride.status === 'IN_PROGRESS' ? (
+      {ride.status === 'COMPLETED' ? (
+        <button className="btn-primary w-full" onClick={() => setActiveRide(null)}>
+          Done — back to the board
+        </button>
+      ) : ride.status === 'IN_PROGRESS' ? (
         <button className="btn-primary w-full" onClick={() => call('complete')} disabled={busy !== null}>
           {busy === 'complete' ? <Spinner /> : 'Complete ride'}
         </button>
