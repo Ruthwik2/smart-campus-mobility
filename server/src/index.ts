@@ -14,9 +14,9 @@ async function main() {
   initSockets(server);
   const closeQueues = initQueues();
 
-  server.listen(env.PORT, () => {
-    logger.info({ port: env.PORT, env: env.NODE_ENV }, 'scm-api listening');
-  });
+  server.listen(env.PORT, '0.0.0.0', () => {
+  logger.info({ port: env.PORT, env: env.NODE_ENV }, 'scm-api listening');
+});
 
   // Drain connections cleanly on SIGTERM/SIGINT (docker stop, ^C) so
   // in-flight rides commit and BullMQ jobs aren't half-processed.
