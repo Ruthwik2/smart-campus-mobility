@@ -75,19 +75,6 @@ export default function LoginPage() {
             Create an account
           </Link>
         </p>
-
-        <div className="card p-4 text-[12px] leading-relaxed text-slate2">
-          <p className="label mb-1">Demo logins (seeded)</p>
-          <p>
-            <span className="font-mono">ananya@campus.test</span> · passenger
-            <br />
-            <span className="font-mono">driver1@campus.test</span> · driver
-            <br />
-            <span className="font-mono">admin@campus.test</span> · transport office
-            <br />
-            password for all: <span className="font-mono">Password123!</span>
-          </p>
-        </div>
       </div>
     </div>
   );
